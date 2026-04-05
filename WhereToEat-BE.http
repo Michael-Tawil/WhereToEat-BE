@@ -1,0 +1,6 @@
+@WhereToEat_BE_HostAddress = http://localhost:5272
+
+GET {{WhereToEat_BE_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
