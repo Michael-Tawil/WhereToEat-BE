@@ -8,6 +8,6 @@ namespace WhereToEat_BE.Controllers
     public class AISuggestController : ControllerBase
     {
         [HttpGet]
-        public IActionResult GetSuggestion() => Ok(new[] { "test from API" });
+        public IActionResult GetSuggestion() => Ok(new[] { "test from API1" });
     }
 }
