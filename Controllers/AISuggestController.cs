@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WhereToEat_BE.Models;
 using WhereToEat_BE.Services;
 
 namespace WhereToEat_BE.Controllers
@@ -15,11 +16,11 @@ namespace WhereToEat_BE.Controllers
             _placesService = PlacesService;
         }
 
-        [HttpGet]
-        public async Task <IActionResult> GetSuggestion()
+        [HttpPost("suggest")]
+        public async Task <IActionResult> GetSuggestion([FromBody] SuggestionRequest request)
         {
-            var result = await _placesService.GetRestaurants();
-            return Ok(result);
+            var places = await _placesService.GetRestaurants(request.Cuisine,request.Location);
+            return Ok(places);
         }
     }
 }
