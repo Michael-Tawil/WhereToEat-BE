@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using WhereToEat_BE.Services;
 
 namespace WhereToEat_BE.Controllers
 {
@@ -7,7 +8,18 @@ namespace WhereToEat_BE.Controllers
     [ApiController]
     public class AISuggestController : ControllerBase
     {
+        private readonly PlacesService _placesService;
+
+        public AISuggestController(PlacesService PlacesService)
+        {
+            _placesService = PlacesService;
+        }
+
         [HttpGet]
-        public IActionResult GetSuggestion() => Ok(new[] { "test from API12" });
+        public async Task <IActionResult> GetSuggestion()
+        {
+            var result = await _placesService.GetRestaurants();
+            return Ok(result);
+        }
     }
 }
