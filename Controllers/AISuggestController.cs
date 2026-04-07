@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WhereToEat_BE.Models;
 using WhereToEat_BE.Services;
@@ -17,7 +18,7 @@ namespace WhereToEat_BE.Controllers
             _placesService = PlacesService;
             _aiService = aiService;
         }
-
+        [Authorize]
         [HttpPost("suggest")]
         public async Task <IActionResult> GetSuggestion([FromBody] SuggestionRequest request)
         {
