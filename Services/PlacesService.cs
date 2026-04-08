@@ -6,12 +6,18 @@ namespace WhereToEat_BE.Services
 {
     public class PlacesService
     {
+        private readonly IConfiguration _configuration;
+
+        public PlacesService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
         public async Task<List<GooglePlace>> GetRestaurants(string cuisine, string location)
         {
             var client = new RestClient("https://places.googleapis.com");
             var request = new RestRequest("/v1/places:searchText");
             request.AddHeader("Content-Type", "application/json");
-            request.AddHeader("X-Goog-Api-Key", "AIzaSyBJFeAlKiWBjKEnz9kPkwBlS9j6F5yCUUU");
+            request.AddHeader("X-Goog-Api-Key", _configuration["Places:Secret"]);
             request.AddHeader("X-Goog-FieldMask", "places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.primaryType");
 
             request.AddJsonBody(new

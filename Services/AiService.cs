@@ -6,6 +6,12 @@ namespace WhereToEat_BE.Services
 {
     public class AIService
     {
+        private readonly IConfiguration _configuration;
+
+        public AIService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
         public async Task<SuggestionResponse> GetSuggestion(List<GooglePlace> places, string cuisine)
         {
             // 1. Build prompt from places list
@@ -30,7 +36,7 @@ No extra text. Just the JSON.";
 
             // 2. Call Gemini API
             var client = new RestClient("https://generativelanguage.googleapis.com");
-            var request = new RestRequest($"/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCIC84G93OLS8nsMVHnp1Janf942kAGD2M");
+            var request = new RestRequest($"/v1beta/models/gemini-2.5-flash:generateContent?key={_configuration["AI:Secret"]}");
             request.AddHeader("Content-Type", "application/json");
 
             request.AddJsonBody(new

@@ -33,7 +33,7 @@ builder.Services.AddSwaggerGen(options =>
         [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
 });
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql("Host=aws-1-ap-northeast-2.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.objdwqjfnynzltwlexpe;Password=TzoFYET4VDRVrbtO;SSL Mode=Require;Trust Server Certificate=true;Pooling=false"));
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration["DB:Secret"]));
 builder.Services.AddScoped<AIService>();
 builder.Services.AddScoped<PlacesService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
