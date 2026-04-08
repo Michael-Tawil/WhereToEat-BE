@@ -12,6 +12,8 @@ namespace WhereToEat_BE.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Favourite> Favourites { get; set; }
 
+        public DbSet<LastVisited> LastVisited { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>(entity =>
@@ -34,6 +36,19 @@ namespace WhereToEat_BE.Data
                 entity.Property(e => e.Cuisine).HasColumnName("cuisine");
                 entity.Property(e => e.PriceRange).HasColumnName("price_range");
                 entity.Property(e => e.CreatedAt).HasColumnName("created_at").ValueGeneratedOnAdd();
+            });
+
+            modelBuilder.Entity<LastVisited>(entity =>
+            {
+                entity.ToTable("last_visited");
+                entity.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.RestaurantName).HasColumnName("restaurant_name");
+                entity.Property(e => e.Address).HasColumnName("address");
+                entity.Property(e => e.Rating).HasColumnName("rating");
+                entity.Property(e => e.Cuisine).HasColumnName("cuisine");
+                entity.Property(e => e.PriceRange).HasColumnName("price_range");
+                entity.Property(e => e.VisitedAt).HasColumnName("visited_at").ValueGeneratedOnAdd();
             });
         }
     }
