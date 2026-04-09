@@ -36,7 +36,7 @@ No extra text. Just the JSON.";
 
             // 2. Call Gemini API
             var client = new RestClient("https://generativelanguage.googleapis.com");
-            var request = new RestRequest($"/v1beta/models/gemini-2.5-flash:generateContent?key={_configuration["AI:Secret"]}");
+            var request = new RestRequest($"/v1beta/models/gemini-2.5-flash-lite:generateContent?key={_configuration["AI:Secret"]}");
             request.AddHeader("Content-Type", "application/json");
 
             request.AddJsonBody(new
