@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WhereToEat_BE.Models;
 using WhereToEat_BE.Services;
+using System.Security.Claims;
 
 namespace WhereToEat_BE.Controllers
 {
@@ -22,8 +23,9 @@ namespace WhereToEat_BE.Controllers
         [HttpPost("suggest")]
         public async Task <IActionResult> GetSuggestion([FromBody] SuggestionRequest request)
         {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var places = await _placesService.GetRestaurants(request.Cuisine,request.Location);
-            var suggestion = await _aiService.GetSuggestion(places, request.Cuisine);
+            var suggestion = await _aiService.GetSuggestion(places, request.Cuisine, userId);
             return Ok(suggestion);
         }
     }
