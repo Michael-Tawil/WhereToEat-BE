@@ -19,7 +19,7 @@ namespace WhereToEat_BE.Services
         public async Task<SuggestionResponse> GetSuggestion(List<GooglePlace> places, string cuisine, Guid UserId)
         {
             // 1. Build prompt from places list
-            var lv = await _context.LastVisited.Where(l => l.UserId == UserId && l.Cuisine == cuisine).ToListAsync();
+            var lv = await _context.LastVisited.Where(l => l.UserId == UserId).ToListAsync();
             var favs = await _context.Favourites.Where(l => l.UserId == UserId).ToListAsync();
 
             var lvText = lv.Any() ? string.Join(", ", lv.Select(l => l.RestaurantName)) : "None";
