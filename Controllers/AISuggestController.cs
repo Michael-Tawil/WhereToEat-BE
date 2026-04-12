@@ -24,8 +24,8 @@ namespace WhereToEat_BE.Controllers
         public async Task <IActionResult> GetSuggestion([FromBody] SuggestionRequest request)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var places = await _placesService.GetRestaurants(request.Cuisine,request.Location);
-            var suggestion = await _aiService.GetSuggestion(places, request.Cuisine, userId);
+            var placesResponse = await _placesService.GetRestaurants(request.Cuisine,request.Location);
+            var suggestion = await _aiService.GetSuggestion(placesResponse, request.Cuisine, request.Location, userId);
             return Ok(suggestion);
         }
     }

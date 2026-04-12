@@ -12,34 +12,40 @@ namespace WhereToEat_BE.Services
         {
             _configuration = configuration;
         }
-        public async Task<List<GooglePlace>> GetRestaurants(string cuisine, string location)
+
+        public async Task<GooglePlacesResponse> GetRestaurants(string cuisine, string location, string? pageToken = null)
         {
             var client = new RestClient("https://places.googleapis.com");
             var request = new RestRequest("/v1/places:searchText");
             request.AddHeader("Content-Type", "application/json");
             request.AddHeader("X-Goog-Api-Key", _configuration["Places:Secret"]);
-            request.AddHeader("X-Goog-FieldMask", "places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.primaryType");
+            request.AddHeader("X-Goog-FieldMask", "places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.primaryType,nextPageToken");
 
-            request.AddJsonBody(new
+            object body;
+            if (pageToken != null)
             {
-                textQuery = $" {cuisine} restaurants in {location}"
-            });
-
-            var response = await client.ExecutePostAsync(request);
-
-            if(response == null)
-            {
-                return new List<GooglePlace>();
+                body = new { textQuery = $"{cuisine} in {location}", pageToken };
             }
             else
             {
-                var googleResponse = JsonSerializer.Deserialize<GooglePlacesResponse>(response.Content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                return googleResponse.Places;
+                body = new { textQuery = $"{cuisine} in {location}" };
             }
+
+            request.AddJsonBody(body);
+
+            var response = await client.ExecutePostAsync(request);
+
+            var googleResponse = JsonSerializer.Deserialize<GooglePlacesResponse>(response.Content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (googleResponse?.Places == null)
+            {
+                return new GooglePlacesResponse { Places = new List<GooglePlace>() };
+            }
+
+            return googleResponse;
         }
     }
 }

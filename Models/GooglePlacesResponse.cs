@@ -3,6 +3,7 @@
     public class GooglePlacesResponse
     {
         public List<GooglePlace> Places { get; set; }
+        public string? NextPageToken { get; set; }
     }
 
     public class GooglePlace

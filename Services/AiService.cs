@@ -10,54 +10,82 @@ namespace WhereToEat_BE.Services
     {
         private readonly IConfiguration _configuration;
         private readonly AppDbContext _context;
+        private readonly PlacesService _placesService;
 
-        public AIService(IConfiguration configuration, AppDbContext context)
+        public AIService(IConfiguration configuration, AppDbContext context, PlacesService placesService)
         {
             _configuration = configuration;
             _context = context;
+            _placesService = placesService;
         }
-        public async Task<SuggestionResponse> GetSuggestion(List<GooglePlace> places, string cuisine, Guid UserId)
+
+        public async Task<SuggestionResponse> GetSuggestion(GooglePlacesResponse placesResponse, string cuisine, string location, Guid UserId)
         {
-            // 1. Build prompt from places list
+            // Fetch user history
             var lv = await _context.LastVisited.Where(l => l.UserId == UserId).ToListAsync();
             var favs = await _context.Favourites.Where(l => l.UserId == UserId).ToListAsync();
+            var suggested = await _context.Suggested.Where(s => s.UserId == UserId).ToListAsync();
 
+            // Start with first page
+            var allPlaces = new List<GooglePlace>(placesResponse.Places);
+            var nextPageToken = placesResponse.NextPageToken;
+
+            // Keep fetching pages until we have 5+ unseen places
+            while (nextPageToken != null)
+            {
+                var remaining = allPlaces
+                    .Where(p => !suggested.Any(s => s.RestaurantName == p.DisplayName.Text))
+                    .ToList();
+
+                if (remaining.Count >= 5) break;
+
+                var nextPage = await _placesService.GetRestaurants(cuisine, location, nextPageToken);
+                allPlaces.AddRange(nextPage.Places);
+                nextPageToken = nextPage.NextPageToken;
+            }
+
+            // Get final unseen pool
+            var pool = allPlaces
+                .Where(p => !suggested.Any(s => s.RestaurantName == p.DisplayName.Text))
+                .ToList();
+
+            // Build texts for prompt
             var lvText = lv.Any() ? string.Join(", ", lv.Select(l => l.RestaurantName)) : "None";
             var favsText = favs.Any() ? string.Join(", ", favs.Select(f => f.RestaurantName)) : "None";
+            var suggestedText = suggested.Any() ? string.Join(", ", suggested.Select(s => s.RestaurantName)) : "None";
 
-
-            var placesText = string.Join("\n", places.Select(p =>
+            var placesText = string.Join("\n", pool.Select(p =>
                 $"- {p.DisplayName.Text}, {p.FormattedAddress}, Rating: {p.Rating}, Cuisine: {p.PrimaryType}, Price: {p.PriceLevel}"));
 
-            var prompt = $@"You are a personalised restaurant recommendation assistant.
+            var prompt = $@"You are a personalised dining and food spot recommendation assistant.
 
-Here is a list of real restaurants:
+Here is a list of real places:
 {placesText}
 
-The user is looking for: {cuisine} food.
+The user is looking for: {cuisine} in {location}
 
-User's favourite restaurants (suggest similar style if possible): {favsText}
-
-Restaurants the user has recently visited (DO NOT suggest these): {lvText}
+User's favourites (understand their taste from these): {favsText}
+Places already suggested (DO NOT suggest these): {suggestedText}
+Places recently visited (DO NOT suggest these): {lvText}
 
 Rules:
-- NEVER suggest a restaurant from the recently visited list
-- NEVER suggest the same restaurant twice in a row
-- If the user has favourites, prefer a similar style or cuisine
-- Pick ONE restaurant the user hasn't been to recently
-- Vary your suggestions each time — don't always pick the highest rated option
+- NEVER suggest a place from the already suggested or recently visited lists
+- The user's request may be a cuisine, a vibe, a type of food, or a description — interpret it intelligently
+- Use the favourites to understand the user's taste preferences
+- Pick ONE place that best matches the user's intent
+- Vary your suggestions — don't always pick the highest rated
 - Respond ONLY in JSON with exactly these fields:
 {{
-  ""name"": ""restaurant name"",
+  ""name"": ""place name"",
   ""address"": ""full address"",
   ""rating"": 4.5,
-  ""cuisine"": ""cuisine type"",
+  ""cuisine"": ""type of place"",
   ""priceRange"": ""$ or $$ or $$$ or $$$$"",
   ""reason"": ""why you picked this place""
 }}
 No extra text. Just the JSON.";
 
-            // 2. Call Gemini API
+            // Call Gemini API
             var client = new RestClient("https://generativelanguage.googleapis.com");
             var request = new RestRequest($"/v1beta/models/gemini-2.5-flash-lite:generateContent?key={_configuration["AI:Secret"]}");
             request.AddHeader("Content-Type", "application/json");
@@ -86,17 +114,21 @@ No extra text. Just the JSON.";
                 PropertyNameCaseInsensitive = true
             });
 
-            // Extract the text from the response
             var rawText = geminiResponse.Candidates[0].Content.Parts[0].Text;
-
-            // Strip the ```json and ``` markers Gemini adds
             var cleanJson = rawText.Replace("```json", "").Replace("```", "").Trim();
 
-            // Deserialize into your SuggestionResponse
             var suggestion = JsonSerializer.Deserialize<SuggestionResponse>(cleanJson, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
+
+            // Save suggestion to history
+            _context.Suggested.Add(new Suggested
+            {
+                UserId = UserId,
+                RestaurantName = suggestion.Name
+            });
+            await _context.SaveChangesAsync();
 
             return suggestion;
         }

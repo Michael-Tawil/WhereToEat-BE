@@ -14,6 +14,8 @@ namespace WhereToEat_BE.Data
 
         public DbSet<LastVisited> LastVisited { get; set; }
 
+        public DbSet<Suggested> Suggested { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>(entity =>
@@ -49,6 +51,15 @@ namespace WhereToEat_BE.Data
                 entity.Property(e => e.Cuisine).HasColumnName("cuisine");
                 entity.Property(e => e.PriceRange).HasColumnName("price_range");
                 entity.Property(e => e.VisitedAt).HasColumnName("visited_at").ValueGeneratedOnAdd();
+            });
+
+            modelBuilder.Entity<Suggested>(entity =>
+            {
+                entity.ToTable("suggested");
+                entity.Property(e => e.Id).HasColumnName("id").ValueGeneratedOnAdd();
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.RestaurantName).HasColumnName("restaurant_name");
+                entity.Property(e => e.SuggestedAt).HasColumnName("suggested_at").ValueGeneratedOnAdd();
             });
         }
     }

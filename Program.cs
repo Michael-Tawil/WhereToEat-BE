@@ -34,8 +34,8 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration["DB:Secret"]));
-builder.Services.AddScoped<AIService>();
 builder.Services.AddScoped<PlacesService>();
+builder.Services.AddScoped<AIService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
