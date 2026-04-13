@@ -122,8 +122,6 @@ API runs on `https://localhost:7134` — Swagger UI available at `/swagger/index
 
 ## Roadmap (V2)
 
-- Smart prompt using user's favourites and visit history
-- Rotation logic — exclude recently visited places
 - Caching Google Places results to reduce API calls
 - Rate limiting per user
 - Retry logic for AI failures
