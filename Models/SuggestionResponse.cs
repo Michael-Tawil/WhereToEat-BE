@@ -9,6 +9,6 @@
         public string PriceRange { get; set; }
         public string Reason { get; set; }
 
-
+        public string? GoogleMapsUri { get; set; }
     }
 }

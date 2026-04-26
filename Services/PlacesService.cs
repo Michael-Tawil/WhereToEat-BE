@@ -19,7 +19,7 @@ namespace WhereToEat_BE.Services
             var request = new RestRequest("/v1/places:searchText");
             request.AddHeader("Content-Type", "application/json");
             request.AddHeader("X-Goog-Api-Key", _configuration["Places:Secret"]);
-            request.AddHeader("X-Goog-FieldMask", "places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.primaryType,nextPageToken");
+            request.AddHeader("X-Goog-FieldMask", "places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.primaryType,nextPageToken,places.googleMapsUri");
 
             object body;
             if (pageToken != null)

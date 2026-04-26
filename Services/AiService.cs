@@ -49,6 +49,12 @@ namespace WhereToEat_BE.Services
                 .Where(p => !suggested.Any(s => s.RestaurantName == p.DisplayName.Text))
                 .ToList();
 
+
+            if (!pool.Any())
+            {
+                return new SuggestionResponse { Name = "No suggestions available", Reason = "You've seen all available restaurants in this area. Try a different location or cuisine." };
+            }
+
             // Build texts for prompt
             var lvText = lv.Any() ? string.Join(", ", lv.Select(l => l.RestaurantName)) : "None";
             var favsText = favs.Any() ? string.Join(", ", favs.Select(f => f.RestaurantName)) : "None";
@@ -114,6 +120,11 @@ No extra text. Just the JSON.";
                 PropertyNameCaseInsensitive = true
             });
 
+            if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0)
+            {
+                throw new Exception($"Gemini returned no candidates. Response: {response.Content}");
+            }
+
             var rawText = geminiResponse.Candidates[0].Content.Parts[0].Text;
             var cleanJson = rawText.Replace("```json", "").Replace("```", "").Trim();
 
@@ -121,6 +132,13 @@ No extra text. Just the JSON.";
             {
                 PropertyNameCaseInsensitive = true
             });
+
+            var matchedPlace = pool.FirstOrDefault(p => p.DisplayName.Text.Equals(suggestion.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (matchedPlace != null)
+            {
+                suggestion.GoogleMapsUri = matchedPlace.GoogleMapsUri;
+            }
 
             // Save suggestion to history
             _context.Suggested.Add(new Suggested

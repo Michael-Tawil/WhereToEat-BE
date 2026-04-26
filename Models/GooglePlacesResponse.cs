@@ -13,6 +13,7 @@
         public double Rating { get; set; }
         public string PrimaryType { get; set; }
         public string PriceLevel { get; set; }
+        public string? GoogleMapsUri { get; set; }
     }
 
     public class DisplayName
