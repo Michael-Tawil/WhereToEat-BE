@@ -1,8 +1,9 @@
-﻿using RestSharp;
-using System.Text.Json;
+﻿using System.Text.Json;
 using WhereToEat_BE.Data;
 using WhereToEat_BE.Models;
 using Microsoft.EntityFrameworkCore;
+using OpenAI;
+using OpenAI.Chat;
 
 namespace WhereToEat_BE.Services
 {
@@ -92,40 +93,14 @@ Rules:
 No extra text. Just the JSON.";
 
             // Call Gemini API
-            var client = new RestClient("https://generativelanguage.googleapis.com");
-            var request = new RestRequest($"/v1beta/models/gemini-2.5-flash:generateContent?key={_configuration["AI:Secret"]}");
-            request.AddHeader("Content-Type", "application/json");
+            var client = new OpenAIClient(_configuration["AI:Secret"]);
+            var chatClient = client.GetChatClient("gpt-4o-mini");
 
-            request.AddJsonBody(new
-            {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new[]
-                        {
-                            new { text = prompt }
-                        }
-                    }
-                }
-            });
+            var completion = await chatClient.CompleteChatAsync(prompt);
+            var rawText = completion.Value.Content[0].Text;
 
-            var response = await client.ExecutePostAsync(request);
+            Console.WriteLine("OpenAI response: {0}", rawText);
 
-            Console.WriteLine("Gemini Status: {0}", response.StatusCode);
-            Console.WriteLine("Gemini Content: {0}", response.Content);
-
-            var geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(response.Content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0)
-            {
-                throw new Exception($"Gemini returned no candidates. Response: {response.Content}");
-            }
-
-            var rawText = geminiResponse.Candidates[0].Content.Parts[0].Text;
             var cleanJson = rawText.Replace("```json", "").Replace("```", "").Trim();
 
             var suggestion = JsonSerializer.Deserialize<SuggestionResponse>(cleanJson, new JsonSerializerOptions
@@ -140,7 +115,6 @@ No extra text. Just the JSON.";
                 suggestion.GoogleMapsUri = matchedPlace.GoogleMapsUri;
             }
 
-            // Save suggestion to history
             _context.Suggested.Add(new Suggested
             {
                 UserId = UserId,
